@@ -10,17 +10,13 @@ from pytz import timezone
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
-MYSTERY_DINNER_CHANNEL_ID = 817422144739868674
+MYSTERY_DINNER_CHANNEL_ID = int(os.getenv('DISCORD_MYSTERY_DINNER_CHANNEL_ID'))
 MYSTERY_DINNER_PICTURE_URI = 'https://i.imgur.com/4ZKWUVC.jpg'
 MYSTERY_DINNER_CONFIRMATION_EMOJI = '👍'
 intents = discord.Intents().default()
 intents.members = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
-
-
-def check_if_mystery_dinner_channel(ctx):
-    return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
 
 
 def make_pairings(members):
@@ -65,6 +61,10 @@ async def on_command_error(ctx, error):
         await ctx.channel.send(error)
 
 
+def check_if_mystery_dinner_channel(ctx):
+    return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
+
+
 @bot.command(name="schedulemd", help="Schedule a mystery dinner using a date and time",
              usage="next friday at 6pm")
 @commands.check(check_if_mystery_dinner_channel)
@@ -82,5 +82,16 @@ async def scheduled_mystery_dinner(ctx, *, raw_datetime: str):
     await ctx.channel.send(content=f"That's it folks, all the pairings have been sent out. Enjoy your meal!",
                            embed=mystery_dinner_embed)
 
+
+def check_if_dm(ctx):
+    return isinstance(ctx.channel, discord.DMChannel)
+
+
+@bot.command(name="peachosays", help="Send a private message as peachorobo",
+             usage="@allison your foods here")
+@commands.check(check_if_dm)
+async def send_message_as_bot(ctx, user: discord.User, *, message: str):
+    await user.send(f'Private message delivered using Peacho: {message}')
+    await ctx.author.send(f'Message successfully sent to {user.display_name}.')
 
 bot.run(TOKEN)
