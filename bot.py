@@ -83,8 +83,11 @@ async def scheduled_mystery_dinner(ctx, *, raw_datetime: str):
                            embed=mystery_dinner_embed)
 
 
-def check_if_dm(ctx):
-    return isinstance(ctx.channel, discord.DMChannel)
+async def check_if_dm(ctx):
+    is_dm = isinstance(ctx.channel, discord.DMChannel)
+    if not is_dm:
+        await ctx.channel.send('This command can only be used in DMs with peachorobo')
+    return is_dm
 
 
 @bot.command(name="peachosays", help="Send a private message as peachorobo",
