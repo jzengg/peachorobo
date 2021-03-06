@@ -50,6 +50,13 @@ async def send_pairings_out(members, mystery_dinner_time):
                          f"This is happening {mystery_dinner_time}")
 
 
+async def send_invitation(channel, mystery_dinner_time):
+    invitation_message = await channel.send(
+        content=f"You want to schedule a mystery dinner for {mystery_dinner_time}? React with "
+                f"{MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm and send out pairings.")
+    await invitation_message.add_reaction(MYSTERY_DINNER_CONFIRMATION_EMOJI)
+
+
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingRequiredArgument):
@@ -63,14 +70,10 @@ async def on_command_error(ctx, error):
 @commands.check(check_if_mystery_dinner_channel)
 async def scheduled_mystery_dinner(ctx, *, raw_datetime: str):
     mystery_dinner_time = parse_raw_datetime(raw_datetime)
-    invitation_message = await ctx.channel.send(
-        content=f"You want to schedule a mystery dinner for {mystery_dinner_time}? React with "
-                f"{MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm and send out pairings.")
-    await invitation_message.add_reaction(MYSTERY_DINNER_CONFIRMATION_EMOJI)
+    await send_invitation(ctx.channel, mystery_dinner_time)
 
     def is_invite_confirmed(reaction, user):
         return user == ctx.author and str(reaction.emoji) == MYSTERY_DINNER_CONFIRMATION_EMOJI
-
     await bot.wait_for('reaction_add', timeout=60.0, check=is_invite_confirmed)
 
     members = [member for member in ctx.channel.members if not member.bot]
