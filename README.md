@@ -14,11 +14,15 @@ pip install -r requirements.txt
 `DISCORD_TOKEN` - should be the token that corresponds to the bot you set up in Discord applications
 `DISCORD_MYSTERY_DINNER_CHANNEL_ID` - ID of the channel you want the bot to be active in
 
-## Start bot in tmux session
+## Start bot in tmux session named discordbot
 ```
 tmux new -s discordbot
 python3 main.py
 ```
-Detach from the session using `C-b d`
-See running sesisons `tmux ls`
-Reattach `tmux attach -t <SESSION_NAME>`
+
+### tmux cheatsheet
+```
+C-b d # Detach from a session
+tmux ls # See running sessions
+tmux attach -t <SESSION_NAME> # Reattach to a session
+```
