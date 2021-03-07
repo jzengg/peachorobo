@@ -8,6 +8,8 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from pytz import timezone
 
+from db import create_mystery_dinner, get_latest_mystery_dinner
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 MYSTERY_DINNER_CHANNEL_ID = int(os.getenv('DISCORD_MYSTERY_DINNER_CHANNEL_ID'))
@@ -29,16 +31,27 @@ def make_pairings(members):
     return pairings
 
 
+def serialize_pairing(user, recipient):
+    return {'user': serialize_user(user), 'matched_with': serialize_user(recipient)}
+
+
+def serialize_user(user):
+    return {'display_name': user.display_name, 'id': user.id, 'name': user.name, 'bot': user.bot}
+
+
 def parse_raw_datetime(raw_datetime):
     cal = parsedatetime.Calendar()
     datetime_obj, status = cal.parseDT(datetimeString=raw_datetime, tzinfo=timezone("US/Eastern"))
     if status == 0:
         raise TypeError('Could not parse date and time')
+    return datetime_obj
+
+
+def get_pretty_datetime(datetime_obj):
     return datetime_obj.strftime("%A %B %d at %-I:%M %p")
 
 
-async def send_pairings_out(members, mystery_dinner_time):
-    pairings = make_pairings(members)
+async def send_pairings_out(pairings, mystery_dinner_time):
     for pairing in pairings:
         giver = pairing['user']
         recipient = pairing['matched_with']
@@ -51,6 +64,17 @@ async def send_invitation(channel, mystery_dinner_time):
         content=f"You want to schedule a mystery dinner for {mystery_dinner_time}? React with "
                 f"{MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm and send out pairings.")
     await invitation_message.add_reaction(MYSTERY_DINNER_CONFIRMATION_EMOJI)
+
+
+async def handle_invite_confirmed(ctx, mystery_dinner_time, datetime_obj):
+    members = [member for member in ctx.channel.members if not member.bot]
+    pairings = make_pairings(members)
+    create_mystery_dinner([serialize_pairing(pairing['user'], pairing['matched_with']) for pairing in pairings],
+                          datetime_obj)
+    await send_pairings_out(pairings, mystery_dinner_time)
+    mystery_dinner_embed = discord.Embed.from_dict({'image': {'url': MYSTERY_DINNER_PICTURE_URI}})
+    await ctx.channel.send(content=f"That's it folks, all the pairings have been sent out. Enjoy your meal!",
+                           embed=mystery_dinner_embed)
 
 
 @bot.event
@@ -68,19 +92,17 @@ def check_if_mystery_dinner_channel(ctx):
 @bot.command(name="schedulemd", help="Schedule a mystery dinner using a date and time",
              usage="next friday at 6pm")
 @commands.check(check_if_mystery_dinner_channel)
-async def scheduled_mystery_dinner(ctx, *, raw_datetime: str):
-    mystery_dinner_time = parse_raw_datetime(raw_datetime)
+async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
+    datetime_obj = parse_raw_datetime(raw_datetime)
+    mystery_dinner_time = get_pretty_datetime(datetime_obj)
     await send_invitation(ctx.channel, mystery_dinner_time)
 
     def is_invite_confirmed(reaction, user):
         return user == ctx.author and str(reaction.emoji) == MYSTERY_DINNER_CONFIRMATION_EMOJI
+
     await bot.wait_for('reaction_add', timeout=60.0, check=is_invite_confirmed)
 
-    members = [member for member in ctx.channel.members if not member.bot]
-    await send_pairings_out(members, mystery_dinner_time)
-    mystery_dinner_embed = discord.Embed.from_dict({'image': {'url': MYSTERY_DINNER_PICTURE_URI}})
-    await ctx.channel.send(content=f"That's it folks, all the pairings have been sent out. Enjoy your meal!",
-                           embed=mystery_dinner_embed)
+    await handle_invite_confirmed(ctx, mystery_dinner_time, datetime_obj)
 
 
 async def check_if_dm(ctx):
@@ -90,11 +112,53 @@ async def check_if_dm(ctx):
     return is_dm
 
 
-@bot.command(name="peachosays", help="Send a private message as peachorobo",
-             usage="@allison your foods here")
+@bot.command(name="nextmd", help="Get information about the next upcoming mystery dinner")
+@commands.check(check_if_mystery_dinner_channel)
+async def get_upcoming_mystery_dinner(ctx):
+    next_dinner = get_latest_mystery_dinner()
+    if not next_dinner:
+        await ctx.channel.send('No upcoming dinners found')
+        return
+    await ctx.channel.send(
+        f"The next dinner with id {next_dinner['id']} will be {get_pretty_datetime(next_dinner['time'])}")
+
+
+@bot.command(name="yourfoodshere", help="Send an anonymous message to the person you're getting dinner for",
+             usage="your food is here!")
 @commands.check(check_if_dm)
-async def send_message_as_bot(ctx, user: discord.User, *, message: str):
-    await user.send(f'Private message delivered using Peacho: {message}')
-    await ctx.author.send(f'Message successfully sent to {user.display_name}.')
+async def send_message_as_deliverer(ctx, *, message: str):
+    next_dinner = get_latest_mystery_dinner()
+    if not next_dinner:
+        await ctx.channel.send('No upcoming dinners found')
+        return
+    author = ctx.author
+    pairing = next((pairing for pairing in next_dinner['pairings'] if
+                    pairing['user']['id'] == author.id), None)
+    if not pairing:
+        await ctx.channel.send('No pairings found')
+        return
+    matched_with_user = bot.get_user(pairing['matched_with']['id'])
+    await matched_with_user.send(f'Private message delivered using Peacho: {message}')
+    await ctx.author.send(f'Message successfully sent to recipient {matched_with_user.display_name}.')
+
+
+@bot.command(name="wheresmyfood", help="Send an anonymous message to your benefactor",
+             usage="where's my food?")
+@commands.check(check_if_dm)
+async def send_message_as_deliverer(ctx, *, message: str):
+    next_dinner = get_latest_mystery_dinner()
+    if not next_dinner:
+        await ctx.channel.send('No upcoming dinners found')
+        return
+    author = ctx.author
+    pairing = next((pairing for pairing in next_dinner['pairings'] if
+                    pairing['matched_with']['id'] == author.id), None)
+    if not pairing:
+        await ctx.channel.send('No pairings found')
+        return
+    gifter = bot.get_user(pairing['user']['id'])
+    await gifter.send(f'Private message delivered using Peacho: {message}')
+    await ctx.author.send(f'Message successfully sent to your gifter')
+
 
 bot.run(TOKEN)
