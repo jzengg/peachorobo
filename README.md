@@ -1,0 +1,24 @@
+# Peachorobo
+
+A discord bot that helps you schedule secret santa style pairings for mystery dinners.
+
+## Setup
+Create a virtualenv after cloning the repo and install requirements into it
+```
+python3 -m venv venv
+. venv/bin/activate
+pip install -r requirements.txt
+```
+
+## Supply environment variables
+`DISCORD_TOKEN` - should be the token that corresponds to the bot you set up in Discord applications
+`DISCORD_MYSTERY_DINNER_CHANNEL_ID` - ID of the channel you want the bot to be active in
+
+## Start bot in tmux session
+```
+tmux new -s discordbot
+python3 main.py
+```
+Detach from the session using `C-b d`
+See running sesisons `tmux ls`
+Reattach `tmux attach -t <SESSION_NAME>`
