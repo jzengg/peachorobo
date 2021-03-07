@@ -1,41 +1,48 @@
 import json
 from datetime import datetime
+from typing import List, Optional
+
 import pytz
+
+from constants import MysteryDinnerPairing, MysteryDinner, SerializedMysteryDinner, DiscordBot
+from utils import serialize_pairing, deserialize_mystery_dinner
 
 JSON_PATH = "data/db.json"
 
 
-def get_mystery_dinners():
+def _get_serialized_mystery_dinners() -> List[SerializedMysteryDinner]:
     try:
         with open(JSON_PATH, 'r') as f:
-            data = json.load(f)
+            serialized_dinners: List[SerializedMysteryDinner] = json.load(f)
     except FileNotFoundError:
         return []
-    return data
+    return serialized_dinners
 
 
-def create_mystery_dinner(pairings, scheduled_time):
-    dinners = get_mystery_dinners()
-    dinners.append({'pairings': pairings, 'datetime_iso': scheduled_time.isoformat(), 'id': len(dinners) + 1})
+def create_mystery_dinner(pairings: List[MysteryDinnerPairing], scheduled_time: datetime) -> None:
+    dinners = _get_serialized_mystery_dinners()
+    serialized_pairings = [serialize_pairing(pairing.user, pairing.matched_with) for pairing in pairings]
+    serialized_dinner = {'pairings': serialized_pairings,
+                         'datetime_iso': scheduled_time.isoformat(), 'id': len(dinners) + 1}
+    dinners.append(serialized_dinner)
     with open(JSON_PATH, 'w') as f:
         json.dump(dinners, f)
 
 
-def get_latest_mystery_dinner():
-    dinners = get_mystery_dinners()
+def get_latest_mystery_dinner(bot: DiscordBot) -> Optional[MysteryDinner]:
+    dinners = _get_serialized_mystery_dinners()
     if not dinners:
         return None
-    last_dinner = dinners[-1]
-    last_dinner_time = datetime.fromisoformat(last_dinner['datetime_iso'])
+    last_dinner = deserialize_mystery_dinner(dinners[-1], bot)
     utc_now = pytz.utc.localize(datetime.utcnow())
     est_now = utc_now.astimezone(pytz.timezone("US/Eastern"))
-    if last_dinner_time < est_now:
+    if last_dinner.time < est_now:
         return None
-    return {'pairings': last_dinner['pairings'], 'id': last_dinner['id'], 'time': last_dinner_time}
+    return last_dinner
 
 
-def cancel_latest_mystery_dinner():
-    dinners = get_mystery_dinners()
+def cancel_latest_mystery_dinner() -> None:
+    dinners = _get_serialized_mystery_dinners()
     if not dinners:
         return
     dinners = dinners[:-1]
