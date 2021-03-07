@@ -55,8 +55,9 @@ async def send_pairings_out(pairings, mystery_dinner_time):
     for pairing in pairings:
         giver = pairing['user']
         recipient = pairing['matched_with']
-        await giver.send(f"Hi {giver.display_name}, you're getting dinner for {recipient.display_name}. "
-                         f"This is happening {mystery_dinner_time}")
+        await giver.send(
+            f"Hi {giver.display_name}, you're getting dinner for {recipient.display_name}. "
+            f"This is happening {mystery_dinner_time}. Use !help to see how to send anonymous messages")
 
 
 async def send_invitation(channel, mystery_dinner_time):
