@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import List, Optional
 
 import pytz
+from discord.ext import commands
 
 from constants import (
     MysteryDinnerPairing,
     MysteryDinner,
     SerializedMysteryDinner,
-    DiscordBot,
 )
 from utils import serialize_pairing, deserialize_mystery_dinner
 
@@ -31,7 +31,7 @@ def create_mystery_dinner(
     serialized_pairings = [
         serialize_pairing(pairing.user, pairing.matched_with) for pairing in pairings
     ]
-    serialized_dinner = {
+    serialized_dinner: SerializedMysteryDinner = {
         "pairings": serialized_pairings,
         "datetime_iso": scheduled_time.isoformat(),
         "id": len(dinners) + 1,
@@ -41,7 +41,7 @@ def create_mystery_dinner(
         json.dump(dinners, f)
 
 
-def get_latest_mystery_dinner(bot: DiscordBot) -> Optional[MysteryDinner]:
+def get_latest_mystery_dinner(bot: commands.Bot) -> Optional[MysteryDinner]:
     dinners = _get_serialized_mystery_dinners()
     if not dinners:
         return None

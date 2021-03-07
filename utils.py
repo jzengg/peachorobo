@@ -1,19 +1,20 @@
 from datetime import datetime
 
+import discord
 import parsedatetime
 from pytz import timezone
 
-from constants import DiscordUser, SerializedPairing, SerializedUser
+from constants import SerializedPairing, SerializedUser
 from constants import MysteryDinnerPairing, MysteryDinner, SerializedMysteryDinner
 
 
 def serialize_pairing(
-    user: DiscordUser, matched_with: DiscordUser
+    user: discord.User, matched_with: discord.User
 ) -> SerializedPairing:
     return {"user": serialize_user(user), "matched_with": serialize_user(matched_with)}
 
 
-def serialize_user(user: DiscordUser) -> SerializedUser:
+def serialize_user(user: discord.User) -> SerializedUser:
     return {
         "display_name": user.display_name,
         "id": user.id,

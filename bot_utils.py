@@ -4,18 +4,17 @@ from datetime import datetime
 from typing import List
 
 import discord
+from discord.ext import commands
 
 from constants import (
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
     MYSTERY_DINNER_PICTURE_URI,
     MysteryDinnerPairing,
-    DiscordUser,
-    DiscordContext,
 )
 from db import create_mystery_dinner
 
 
-def make_pairings(members: List[DiscordUser]) -> List[MysteryDinnerPairing]:
+def make_pairings(members: List[discord.User]) -> List[MysteryDinnerPairing]:
     temp_members = copy.copy(members)
     pairings = []
     random.shuffle(temp_members)
@@ -38,7 +37,7 @@ async def send_pairings_out(
         )
 
 
-async def send_invitation(ctx: DiscordContext, mystery_dinner_time: str) -> None:
+async def send_invitation(ctx: commands.Context, mystery_dinner_time: str) -> None:
     invitation_message = await ctx.channel.send(
         content=f"You want to schedule a mystery dinner for {mystery_dinner_time}? React with "
         f"{MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm and send out pairings."
@@ -47,7 +46,7 @@ async def send_invitation(ctx: DiscordContext, mystery_dinner_time: str) -> None
 
 
 async def handle_invite_confirmed(
-    ctx: DiscordContext, mystery_dinner_time: str, datetime_obj: datetime
+    ctx: commands.Context, mystery_dinner_time: str, datetime_obj: datetime
 ) -> None:
     members = [member for member in ctx.channel.members if not member.bot]
     pairings = make_pairings(members)
