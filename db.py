@@ -32,3 +32,12 @@ def get_latest_mystery_dinner():
     if last_dinner_time < est_now:
         return None
     return {'pairings': last_dinner['pairings'], 'id': last_dinner['id'], 'time': last_dinner_time}
+
+
+def cancel_latest_mystery_dinner():
+    dinners = get_mystery_dinners()
+    if not dinners:
+        return
+    dinners = dinners[:-1]
+    with open(JSON_PATH, 'w') as f:
+        json.dump(dinners, f)

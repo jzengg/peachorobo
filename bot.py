@@ -8,7 +8,7 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from pytz import timezone
 
-from db import create_mystery_dinner, get_latest_mystery_dinner
+from db import create_mystery_dinner, get_latest_mystery_dinner, cancel_latest_mystery_dinner
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -107,8 +107,6 @@ async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
 
 async def check_if_dm(ctx):
     is_dm = isinstance(ctx.channel, discord.DMChannel)
-    if not is_dm:
-        await ctx.channel.send('This command can only be used in DMs with peachorobo')
     return is_dm
 
 
@@ -123,7 +121,29 @@ async def get_upcoming_mystery_dinner(ctx):
         f"The next dinner with id {next_dinner['id']} will be {get_pretty_datetime(next_dinner['time'])}")
 
 
-@bot.command(name="yourfoodshere", help="Send an anonymous message to the person you're getting dinner for",
+@bot.command(name="cancelmd", help="Cancels the next mystery dinner")
+@commands.check(check_if_mystery_dinner_channel)
+async def cancel_upcoming_mystery_dinner(ctx):
+    next_dinner = get_latest_mystery_dinner()
+    if not next_dinner:
+        await ctx.channel.send('No upcoming dinners found')
+        return
+
+    cancel_message = await ctx.channel.send(
+        content=f"Are you sure you want to cancel the next dinner with id {next_dinner['id']} on {get_pretty_datetime(next_dinner['time'])}. "
+                f"React with {MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm.")
+    await cancel_message.add_reaction(MYSTERY_DINNER_CONFIRMATION_EMOJI)
+
+    def is_confirmed(reaction, user):
+        return user == ctx.author and str(reaction.emoji) == MYSTERY_DINNER_CONFIRMATION_EMOJI
+
+    await bot.wait_for('reaction_add', timeout=60.0, check=is_confirmed)
+    cancel_latest_mystery_dinner()
+    await ctx.channel.send(
+        f"The next dinner with id {next_dinner['id']} on {get_pretty_datetime(next_dinner['time'])} was cancelled")
+
+
+@bot.command(name="yourfoodshere", help="Send an anonymous message to the person you're gifting",
              usage="your food is here!")
 @commands.check(check_if_dm)
 async def send_message_as_deliverer(ctx, *, message: str):
