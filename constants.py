@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 from typing_extensions import TypedDict
 
 load_dotenv()
-DISCORD_TOKEN = os.getenv('DISCORD_TOKEN')
-MYSTERY_DINNER_CHANNEL_ID = int(os.getenv('DISCORD_MYSTERY_DINNER_CHANNEL_ID'))
-MYSTERY_DINNER_PICTURE_URI = 'https://i.imgur.com/4ZKWUVC.jpg'
-MYSTERY_DINNER_CONFIRMATION_EMOJI = '👍'
+DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
+MYSTERY_DINNER_CHANNEL_ID = int(os.getenv("DISCORD_MYSTERY_DINNER_CHANNEL_ID"))
+MYSTERY_DINNER_PICTURE_URI = "https://i.imgur.com/4ZKWUVC.jpg"
+MYSTERY_DINNER_CONFIRMATION_EMOJI = "👍"
 
 DiscordUser = discord.User
 DiscordContext = commands.context
