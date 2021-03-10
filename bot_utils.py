@@ -55,11 +55,10 @@ async def handle_invite_confirmed(
     pairings = make_pairings(members)
     calendar_service = CalendarService()
     event = calendar_service.create_event(datetime_obj)
-    event_uri = None
     try:
         event_uri = event.conference_solution.entry_points[0].uri
     except Exception as e:
-        pass
+        event_uri = None
 
     calendar_data: MysteryDinnerCalendar = {"id": event.id, "uri": event_uri}
     create_mystery_dinner(pairings, datetime_obj, calendar_data)
