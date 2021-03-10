@@ -1,23 +1,11 @@
-import os.path
 from datetime import timedelta
 
 import parsedatetime
 from gcsa.conference import ConferenceSolutionCreateRequest, SolutionType
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
-import uuid
 from gcsa.event import Event
 from gcsa.google_calendar import GoogleCalendar, SendUpdatesMode
-from gcsa.recurrence import Recurrence, DAILY, SU, SA
 
-from beautiful_date import Jan, Apr
-
-
-# If modifying these scopes, delete the file token.json.
 from pytz import timezone
-
-SCOPES = ["https://www.googleapis.com/auth/calendar"]
 
 
 class CalendarService:
