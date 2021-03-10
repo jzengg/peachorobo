@@ -2,7 +2,11 @@ import discord
 from discord.ext import commands
 
 from bot_utils import send_invitation, handle_invite_confirmed
-from constants import MYSTERY_DINNER_CHANNEL_ID, MYSTERY_DINNER_CONFIRMATION_EMOJI
+from constants import (
+    MYSTERY_DINNER_CHANNEL_ID,
+    MYSTERY_DINNER_CONFIRMATION_EMOJI,
+    DISCORD_DEBUG_CHANNEL_ID,
+)
 from db import get_latest_mystery_dinner, cancel_latest_mystery_dinner
 from utils import parse_raw_datetime, get_pretty_datetime
 
@@ -20,8 +24,8 @@ async def on_command_error(ctx, error):
         await ctx.channel.send(error)
 
 
-def check_if_mystery_dinner_channel(ctx):
-    return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
+def check_if_valid_channel(ctx):
+    return ctx.channel.id in [MYSTERY_DINNER_CHANNEL_ID, DISCORD_DEBUG_CHANNEL_ID]
 
 
 @bot.command(
@@ -29,7 +33,7 @@ def check_if_mystery_dinner_channel(ctx):
     help="Schedule a mystery dinner using a date and time",
     usage="next friday at 6pm",
 )
-@commands.check(check_if_mystery_dinner_channel)
+@commands.check(check_if_valid_channel)
 async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
     datetime_obj = parse_raw_datetime(raw_datetime)
     mystery_dinner_time = get_pretty_datetime(datetime_obj)
@@ -49,7 +53,7 @@ async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
 @bot.command(
     name="nextmd", help="Get information about the next upcoming mystery dinner"
 )
-@commands.check(check_if_mystery_dinner_channel)
+@commands.check(check_if_valid_channel)
 async def get_upcoming_mystery_dinner(ctx):
     next_dinner = get_latest_mystery_dinner(bot)
     if not next_dinner:
@@ -61,7 +65,7 @@ async def get_upcoming_mystery_dinner(ctx):
 
 
 @bot.command(name="cancelmd", help="Cancels the next mystery dinner")
-@commands.check(check_if_mystery_dinner_channel)
+@commands.check(check_if_valid_channel)
 async def cancel_upcoming_mystery_dinner(ctx):
     next_dinner = get_latest_mystery_dinner(bot)
     if not next_dinner:
