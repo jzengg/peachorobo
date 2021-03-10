@@ -6,8 +6,9 @@ from calendar_service import CalendarService
 from constants import (
     MYSTERY_DINNER_CHANNEL_ID,
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
+    MYSTERY_DINNER_DEBUG_CHANNEL_ID,
 )
-from db import get_latest_mystery_dinner, cancel_latest_mystery_dinner
+from db import DBService
 from utils import parse_raw_datetime, get_pretty_datetime
 
 intents = discord.Intents().default()
@@ -25,6 +26,13 @@ async def on_command_error(ctx, error):
 
 
 def check_if_valid_channel(ctx):
+    return ctx.channel.id in [
+        MYSTERY_DINNER_CHANNEL_ID,
+        MYSTERY_DINNER_DEBUG_CHANNEL_ID,
+    ]
+
+
+def is_prod_channel(ctx: commands.Context):
     return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
 
 
@@ -47,7 +55,12 @@ async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
 
     await bot.wait_for("reaction_add", timeout=60.0, check=is_invite_confirmed)
 
-    await handle_invite_confirmed(ctx, mystery_dinner_time, datetime_obj)
+    await handle_invite_confirmed(
+        ctx,
+        mystery_dinner_time,
+        datetime_obj,
+        is_prod=ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID,
+    )
 
 
 @bot.command(
@@ -55,7 +68,7 @@ async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
 )
 @commands.check(check_if_valid_channel)
 async def get_upcoming_mystery_dinner(ctx):
-    next_dinner = get_latest_mystery_dinner(bot)
+    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return
@@ -68,7 +81,7 @@ async def get_upcoming_mystery_dinner(ctx):
 @bot.command(name="cancelmd", help="Cancels the next mystery dinner")
 @commands.check(check_if_valid_channel)
 async def cancel_upcoming_mystery_dinner(ctx):
-    next_dinner = get_latest_mystery_dinner(bot)
+    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return
@@ -90,7 +103,7 @@ async def cancel_upcoming_mystery_dinner(ctx):
     event_id = next_dinner.calendar.get("id")
     calendar_service = CalendarService()
     calendar_service.delete_event(event_id)
-    cancel_latest_mystery_dinner()
+    DBService(is_prod=is_prod_channel(ctx)).cancel_latest_mystery_dinner()
     await ctx.channel.send(
         f"The next dinner with id {next_dinner.id} on {get_pretty_datetime(next_dinner.time)} was cancelled"
     )
@@ -108,7 +121,7 @@ async def check_if_dm(ctx):
 )
 @commands.check(check_if_dm)
 async def send_message_to_recipient(ctx, *, message: str):
-    next_dinner = get_latest_mystery_dinner(bot)
+    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return
@@ -134,7 +147,7 @@ async def send_message_to_recipient(ctx, *, message: str):
 )
 @commands.check(check_if_dm)
 async def send_message_to_gifter(ctx, *, message: str):
-    next_dinner = get_latest_mystery_dinner(bot)
+    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return

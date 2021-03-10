@@ -1,8 +1,7 @@
 import copy
 import random
 from datetime import datetime
-from time import sleep
-from typing import List, Optional
+from typing import List
 
 import discord
 from discord.ext import commands
@@ -14,7 +13,7 @@ from constants import (
     MysteryDinnerPairing,
     MysteryDinnerCalendar,
 )
-from db import create_mystery_dinner
+from db import DBService
 
 
 def make_pairings(members: List[discord.User]) -> List[MysteryDinnerPairing]:
@@ -49,7 +48,7 @@ async def send_invitation(ctx: commands.Context, mystery_dinner_time: str) -> No
 
 
 async def handle_invite_confirmed(
-    ctx: commands.Context, mystery_dinner_time: str, datetime_obj: datetime
+    ctx: commands.Context, mystery_dinner_time: str, datetime_obj: datetime, is_prod
 ) -> None:
     members = [member for member in ctx.channel.members if not member.bot]
     pairings = make_pairings(members)
@@ -61,7 +60,9 @@ async def handle_invite_confirmed(
         event_uri = None
 
     calendar_data: MysteryDinnerCalendar = {"id": event.id, "uri": event_uri}
-    create_mystery_dinner(pairings, datetime_obj, calendar_data)
+    DBService(is_prod=is_prod).create_mystery_dinner(
+        pairings, datetime_obj, calendar_data
+    )
     await send_pairings_out(pairings, mystery_dinner_time)
 
     mystery_dinner_embed = discord.Embed.from_dict(
