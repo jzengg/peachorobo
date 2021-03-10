@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 
 from bot_utils import send_invitation, handle_invite_confirmed
+from calendar_service import CalendarService
 from constants import (
     MYSTERY_DINNER_CHANNEL_ID,
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
@@ -59,7 +60,8 @@ async def get_upcoming_mystery_dinner(ctx):
         await ctx.channel.send("No upcoming dinners found")
         return
     await ctx.channel.send(
-        f"The next dinner with id {next_dinner.id} will be {get_pretty_datetime(next_dinner.time)}"
+        f"The next dinner with id {next_dinner.id} will be {get_pretty_datetime(next_dinner.time)}. "
+        f"The hangouts link is {next_dinner.calendar.get('uri')}"
     )
 
 
@@ -85,6 +87,9 @@ async def cancel_upcoming_mystery_dinner(ctx):
         )
 
     await bot.wait_for("reaction_add", timeout=60.0, check=is_confirmed)
+    event_id = next_dinner.calendar.get("id")
+    calendar_service = CalendarService()
+    calendar_service.delete_event(event_id)
     cancel_latest_mystery_dinner()
     await ctx.channel.send(
         f"The next dinner with id {next_dinner.id} on {get_pretty_datetime(next_dinner.time)} was cancelled"

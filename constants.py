@@ -1,7 +1,7 @@
 import os
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import discord
 from dotenv import load_dotenv
@@ -20,11 +20,17 @@ class MysteryDinnerPairing:
     matched_with: discord.User
 
 
+class MysteryDinnerCalendar(TypedDict):
+    uri: Optional[str]
+    id: str
+
+
 @dataclass
 class MysteryDinner:
     pairings: List[MysteryDinnerPairing]
     id: int
     time: datetime
+    calendar: MysteryDinnerCalendar
 
 
 class SerializedUser(TypedDict):
@@ -40,6 +46,7 @@ class SerializedPairing(TypedDict):
 
 
 class SerializedMysteryDinner(TypedDict):
+    calendar: MysteryDinnerCalendar
     pairings: List[SerializedPairing]
     id: int
     datetime_iso: str

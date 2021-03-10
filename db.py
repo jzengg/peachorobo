@@ -9,6 +9,7 @@ from constants import (
     MysteryDinnerPairing,
     MysteryDinner,
     SerializedMysteryDinner,
+    MysteryDinnerCalendar,
 )
 from utils import serialize_pairing, deserialize_mystery_dinner
 
@@ -25,7 +26,9 @@ def _get_serialized_mystery_dinners() -> List[SerializedMysteryDinner]:
 
 
 def create_mystery_dinner(
-    pairings: List[MysteryDinnerPairing], scheduled_time: datetime
+    pairings: List[MysteryDinnerPairing],
+    scheduled_time: datetime,
+    calendar: MysteryDinnerCalendar,
 ) -> None:
     dinners = _get_serialized_mystery_dinners()
     serialized_pairings = [
@@ -33,6 +36,7 @@ def create_mystery_dinner(
     ]
     serialized_dinner: SerializedMysteryDinner = {
         "pairings": serialized_pairings,
+        "calendar": calendar,
         "datetime_iso": scheduled_time.isoformat(),
         "id": len(dinners) + 1,
     }

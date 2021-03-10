@@ -1,4 +1,5 @@
-from datetime import timedelta
+from datetime import datetime, timedelta
+from time import sleep
 
 import parsedatetime
 from gcsa.conference import ConferenceSolutionCreateRequest, SolutionType
@@ -14,7 +15,7 @@ class CalendarService:
             "primary", credentials_path="credentials.json", token_path="token.pickle"
         )
 
-    def create_event(self, start_dt):
+    def create_event(self, start_dt: datetime) -> Event:
         end_dt = start_dt + timedelta(hours=2)
         attendees = ["jzengg@gmail.com"]
         event = Event(
@@ -29,13 +30,21 @@ class CalendarService:
         event_response = self.calendar.add_event(
             event, send_updates=SendUpdatesMode.ALL
         )
+        hangout_link = None
+        retries = 5
+        while hangout_link is None and retries > 0:
+            try:
+                hangout_link = event_response.conference_solution.entry_points[0].uri
+            except Exception as e:
+                event = self.get_event(event.id)
+                sleep(5)
         return event_response
 
-    def get_event(self, event_id):
+    def get_event(self, event_id: str) -> Event:
         event_response = self.calendar.get_event(event_id)
         return event_response
 
-    def delete_event(self, event_id):
+    def delete_event(self, event_id: str) -> None:
         event = self.calendar.get_event(event_id)
         self.calendar.delete_event(event)
 
@@ -46,7 +55,8 @@ def main():
     start_dt, _ = cal_parser.parseDT(
         datetimeString="tomorrow at 3pm", tzinfo=timezone("US/Eastern")
     )
-    calendar_service.create_event(start_dt)
+    event = calendar_service.create_event(start_dt)
+    event
 
 
 if __name__ == "__main__":

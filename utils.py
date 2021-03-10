@@ -40,6 +40,7 @@ def get_pretty_datetime(datetime_obj: datetime) -> str:
 def deserialize_mystery_dinner(dinner: SerializedMysteryDinner, bot) -> MysteryDinner:
     return MysteryDinner(
         id=dinner["id"],
+        calendar=dinner["calendar"],
         time=datetime.fromisoformat(dinner["datetime_iso"]),
         pairings=[
             MysteryDinnerPairing(

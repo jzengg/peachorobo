@@ -1,15 +1,18 @@
 import copy
 import random
 from datetime import datetime
-from typing import List
+from time import sleep
+from typing import List, Optional
 
 import discord
 from discord.ext import commands
 
+from calendar_service import CalendarService
 from constants import (
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
     MYSTERY_DINNER_PICTURE_URI,
     MysteryDinnerPairing,
+    MysteryDinnerCalendar,
 )
 from db import create_mystery_dinner
 
@@ -50,12 +53,23 @@ async def handle_invite_confirmed(
 ) -> None:
     members = [member for member in ctx.channel.members if not member.bot]
     pairings = make_pairings(members)
-    create_mystery_dinner(pairings, datetime_obj)
+    calendar_service = CalendarService()
+    event = calendar_service.create_event(datetime_obj)
+    event_uri = None
+    try:
+        event_uri = event.conference_solution.entry_points[0].uri
+    except Exception as e:
+        pass
+
+    calendar_data: MysteryDinnerCalendar = {"id": event.id, "uri": event_uri}
+    create_mystery_dinner(pairings, datetime_obj, calendar_data)
     await send_pairings_out(pairings, mystery_dinner_time)
+
     mystery_dinner_embed = discord.Embed.from_dict(
         {"image": {"url": MYSTERY_DINNER_PICTURE_URI}}
     )
     await ctx.channel.send(
-        content=f"That's it folks, all the pairings have been sent out. Enjoy your meal!",
+        content=f"That's it folks, all the pairings have been sent out. The hangout link is {event_uri}."
+        f" Enjoy your meal!",
         embed=mystery_dinner_embed,
     )
