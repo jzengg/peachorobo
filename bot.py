@@ -5,7 +5,6 @@ from bot_utils import send_invitation, handle_invite_confirmed
 from constants import (
     MYSTERY_DINNER_CHANNEL_ID,
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
-    DISCORD_DEBUG_CHANNEL_ID,
 )
 from db import get_latest_mystery_dinner, cancel_latest_mystery_dinner
 from utils import parse_raw_datetime, get_pretty_datetime
@@ -25,7 +24,7 @@ async def on_command_error(ctx, error):
 
 
 def check_if_valid_channel(ctx):
-    return ctx.channel.id in [MYSTERY_DINNER_CHANNEL_ID, DISCORD_DEBUG_CHANNEL_ID]
+    return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
 
 
 @bot.command(
