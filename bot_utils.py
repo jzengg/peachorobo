@@ -1,7 +1,7 @@
 import copy
 import random
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 import discord
 from discord.ext import commands
@@ -28,13 +28,16 @@ def make_pairings(members: List[discord.User]) -> List[MysteryDinnerPairing]:
 
 
 async def send_pairings_out(
-    pairings: List[MysteryDinnerPairing], mystery_dinner_time: str
+    pairings: List[MysteryDinnerPairing],
+    mystery_dinner_time: str,
+    event_uri: Optional[str],
 ) -> None:
     for pairing in pairings:
         giver = pairing.user
         recipient = pairing.matched_with
         await giver.send(
             f"Hi {giver.display_name}, you're getting dinner for {recipient.display_name}. "
+            f"The hangout link is {event_uri}. "
             f"This is happening {mystery_dinner_time}. Use !help to see how to send anonymous messages"
         )
 
@@ -63,7 +66,7 @@ async def handle_invite_confirmed(
     DBService(is_prod=is_prod).create_mystery_dinner(
         pairings, datetime_obj, calendar_data
     )
-    await send_pairings_out(pairings, mystery_dinner_time)
+    await send_pairings_out(pairings, mystery_dinner_time, event_uri)
 
     mystery_dinner_embed = discord.Embed.from_dict(
         {"image": {"url": MYSTERY_DINNER_PICTURE_URI}}
