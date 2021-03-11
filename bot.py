@@ -83,6 +83,29 @@ async def get_upcoming_mystery_dinner(ctx):
     )
 
 
+@bot.command(name="remindme", help="Refresh yourself on who you're getting dinner for")
+@commands.check(check_if_valid_channel)
+async def get_reminder_message(ctx):
+    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
+    pairing = next(
+        (
+            pairing
+            for pairing in next_dinner.pairings
+            if pairing.user.id == ctx.author.id
+        ),
+        None,
+    )
+    recipient = pairing.matched_with
+    if not next_dinner:
+        await ctx.channel.send("No upcoming dinners found")
+        return
+    await ctx.author.send(
+        f"The next dinner with id {next_dinner.id} will be {get_pretty_datetime(next_dinner.time)}. "
+        f"The hangouts link is {next_dinner.calendar.get('uri')}. "
+        f"You're getting dinner for {recipient.display_name}"
+    )
+
+
 @bot.command(name="cancelmd", help="Cancels the next mystery dinner")
 @commands.check(check_if_valid_channel)
 async def cancel_upcoming_mystery_dinner(ctx):
