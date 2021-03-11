@@ -24,14 +24,15 @@ bot = commands.Bot(command_prefix=_prefix_callable, intents=intents)
 
 @bot.event
 async def on_command_error(ctx, error):
-    if isinstance(error, commands.MissingRequiredArgument):
-        await ctx.channel.send("Missing required argument: {}".format(error.param))
-    else:
-        await ctx.channel.send(error)
+    await ctx.channel.send(error)
 
 
 def check_if_valid_channel(ctx):
-    return ctx.channel.id == peachorobo_config.channel_id
+    if ctx.channel.id != peachorobo_config.channel_id:
+        raise commands.CheckFailure(
+            message="Can only be used in the Mystery Dinner channel"
+        )
+    return True
 
 
 @bot.command(
@@ -75,29 +76,6 @@ async def get_upcoming_mystery_dinner(ctx):
     )
 
 
-@bot.command(name="remindme", help="Refresh yourself on who you're getting dinner for")
-@commands.check(check_if_valid_channel)
-async def get_reminder_message(ctx):
-    next_dinner = DBService.get_latest_mystery_dinner(bot)
-    pairing = next(
-        (
-            pairing
-            for pairing in next_dinner.pairings
-            if pairing.user.id == ctx.author.id
-        ),
-        None,
-    )
-    recipient = pairing.matched_with
-    if not next_dinner:
-        await ctx.channel.send("No upcoming dinners found")
-        return
-    await ctx.author.send(
-        f"The next dinner with id {next_dinner.id} will be {get_pretty_datetime(next_dinner.time)}. "
-        f"The hangouts link is {next_dinner.calendar.get('uri')}. "
-        f"You're getting dinner for {recipient.display_name}"
-    )
-
-
 @bot.command(name="cancelmd", help="Cancels the next mystery dinner")
 @commands.check(check_if_valid_channel)
 async def cancel_upcoming_mystery_dinner(ctx):
@@ -126,9 +104,11 @@ async def cancel_upcoming_mystery_dinner(ctx):
     )
 
 
-async def check_if_dm(ctx):
-    is_dm = isinstance(ctx.channel, discord.DMChannel)
-    return is_dm
+async def check_if_next_dinner_exists(_ctx: commands.Context):
+    next_dinner = DBService.get_latest_mystery_dinner(bot)
+    if not next_dinner:
+        raise commands.CommandError(message="No upcoming dinners found")
+    return True
 
 
 @bot.command(
@@ -136,20 +116,18 @@ async def check_if_dm(ctx):
     help="Send an anonymous message to the person you're gifting",
     usage="your food is here!",
 )
-@commands.check(check_if_dm)
+@commands.dm_only()
+@commands.check(check_if_next_dinner_exists)
 async def send_message_to_recipient(ctx, *, message: str):
     next_dinner = DBService.get_latest_mystery_dinner(bot)
-    if not next_dinner:
-        await ctx.channel.send("No upcoming dinners found")
-        return
+    assert next_dinner is not None
     author = ctx.author
     pairing = next(
         (pairing for pairing in next_dinner.pairings if pairing.user.id == author.id),
         None,
     )
     if not pairing:
-        await ctx.channel.send("No pairings found")
-        return
+        raise commands.CommandError("No pairing found")
     matched_with_user = pairing.matched_with
     await matched_with_user.send(f"Your gifter says via Peacho: {message}")
     await ctx.author.send(
@@ -162,12 +140,11 @@ async def send_message_to_recipient(ctx, *, message: str):
     help="Send an anonymous message to your benefactor",
     usage="where's my food?",
 )
-@commands.check(check_if_dm)
+@commands.dm_only()
+@commands.check(check_if_next_dinner_exists)
 async def send_message_to_gifter(ctx, *, message: str):
     next_dinner = DBService.get_latest_mystery_dinner(bot)
-    if not next_dinner:
-        await ctx.channel.send("No upcoming dinners found")
-        return
+    assert next_dinner is not None
     author = ctx.author
     pairing = next(
         (
@@ -178,8 +155,30 @@ async def send_message_to_gifter(ctx, *, message: str):
         None,
     )
     if not pairing:
-        await ctx.channel.send("No pairings found")
-        return
+        raise commands.CommandError("No pairing found")
     gifter = pairing.user
     await gifter.send(f"Your recipient says via Peacho: {message}")
     await ctx.author.send(f"Message successfully sent to your gifter")
+
+
+@bot.command(name="remindme", help="Refresh yourself on who you're getting dinner for")
+@commands.dm_only()
+@commands.check(check_if_next_dinner_exists)
+async def get_reminder_message(ctx):
+    next_dinner = DBService.get_latest_mystery_dinner(bot)
+    pairing = next(
+        (
+            pairing
+            for pairing in next_dinner.pairings
+            if pairing.user.id == ctx.author.id
+        ),
+        None,
+    )
+    if not pairing:
+        raise commands.CommandError("No pairing found")
+    recipient = pairing.matched_with
+    await ctx.author.send(
+        f"The next dinner with id {next_dinner.id} will be {get_pretty_datetime(next_dinner.time)}. "
+        f"The hangouts link is {next_dinner.calendar.get('uri')}. "
+        f"You're getting dinner for {recipient.display_name}"
+    )
