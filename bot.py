@@ -4,9 +4,7 @@ from discord.ext import commands
 from bot_utils import send_invitation, handle_invite_confirmed
 from calendar_service import CalendarService
 from constants import (
-    MYSTERY_DINNER_CHANNEL_ID,
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
-    MYSTERY_DINNER_DEBUG_CHANNEL_ID,
     MYSTERY_DINNER_CANCEL_EMOJI,
     peachorobo_config,
 )
@@ -16,7 +14,12 @@ from utils import parse_raw_datetime, get_pretty_datetime
 intents = discord.Intents().default()
 intents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+
+def _prefix_callable(_bot, _msg):
+    return peachorobo_config.bot_command_prefix
+
+
+bot = commands.Bot(command_prefix=_prefix_callable, intents=intents)
 
 
 @bot.event
@@ -54,7 +57,6 @@ async def schedule_mystery_dinner(ctx, *, raw_datetime: str):
         ctx,
         mystery_dinner_time,
         datetime_obj,
-        is_prod=ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID,
     )
 
 

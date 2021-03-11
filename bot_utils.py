@@ -51,7 +51,7 @@ async def send_invitation(ctx: commands.Context, mystery_dinner_time: str) -> No
 
 
 async def handle_invite_confirmed(
-    ctx: commands.Context, mystery_dinner_time: str, datetime_obj: datetime, is_prod
+    ctx: commands.Context, mystery_dinner_time: str, datetime_obj: datetime
 ) -> None:
     members = [member for member in ctx.channel.members if not member.bot]
     pairings = make_pairings(members)
