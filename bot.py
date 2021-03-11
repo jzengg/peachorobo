@@ -7,6 +7,7 @@ from constants import (
     MYSTERY_DINNER_CHANNEL_ID,
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
     MYSTERY_DINNER_DEBUG_CHANNEL_ID,
+    MYSTERY_DINNER_CANCEL_EMOJI,
 )
 from db import DBService
 from utils import parse_raw_datetime, get_pretty_datetime
@@ -89,15 +90,12 @@ async def cancel_upcoming_mystery_dinner(ctx):
     cancel_message = await ctx.channel.send(
         content=f"Are you sure you want to cancel the next dinner with id {next_dinner.id} on "
         f"{get_pretty_datetime(next_dinner.time)}. "
-        f"React with {MYSTERY_DINNER_CONFIRMATION_EMOJI} to confirm."
+        f"React with {MYSTERY_DINNER_CANCEL_EMOJI} to confirm."
     )
-    await cancel_message.add_reaction(MYSTERY_DINNER_CONFIRMATION_EMOJI)
+    await cancel_message.add_reaction(MYSTERY_DINNER_CANCEL_EMOJI)
 
     def is_confirmed(reaction, user):
-        return (
-            user == ctx.author
-            and str(reaction.emoji) == MYSTERY_DINNER_CONFIRMATION_EMOJI
-        )
+        return user == ctx.author and str(reaction.emoji) == MYSTERY_DINNER_CANCEL_EMOJI
 
     await bot.wait_for("reaction_add", timeout=60.0, check=is_confirmed)
     event_id = next_dinner.calendar.get("id")
