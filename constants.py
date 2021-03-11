@@ -9,6 +9,7 @@ from typing_extensions import TypedDict
 
 load_dotenv()
 DISCORD_TOKEN = os.environ["DISCORD_TOKEN"]
+CALENDAR_EMAILS = os.environ["CALENDAR_EMAILS"].split(",")
 MYSTERY_DINNER_CHANNEL_ID = int(os.environ["DISCORD_MYSTERY_DINNER_CHANNEL_ID"])
 MYSTERY_DINNER_DEBUG_CHANNEL_ID = int(
     os.environ["DISCORD_MYSTERY_DINNER_DEBUG_CHANNEL_ID"]

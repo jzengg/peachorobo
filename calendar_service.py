@@ -8,6 +8,8 @@ from gcsa.google_calendar import GoogleCalendar, SendUpdatesMode
 
 from pytz import timezone
 
+from constants import CALENDAR_EMAILS
+
 
 class CalendarService:
     def __init__(self):
@@ -17,7 +19,7 @@ class CalendarService:
 
     def create_event(self, start_dt: datetime) -> Event:
         end_dt = start_dt + timedelta(hours=2)
-        attendees = ["jzengg@gmail.com"]
+        attendees = CALENDAR_EMAILS
         event = Event(
             "Mystery Dinner",
             start=start_dt,
