@@ -1,5 +1,6 @@
 import json
 from datetime import datetime
+from json import JSONDecodeError
 from typing import List, Optional
 
 import pytz
@@ -25,7 +26,7 @@ class DBService:
         try:
             with open(self.json_path, "r") as f:
                 serialized_dinners: List[SerializedMysteryDinner] = json.load(f)
-        except FileNotFoundError:
+        except (JSONDecodeError, FileNotFoundError):
             return []
         return serialized_dinners
 

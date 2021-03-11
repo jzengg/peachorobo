@@ -37,6 +37,10 @@ def is_prod_channel(ctx: commands.Context):
     return ctx.channel.id == MYSTERY_DINNER_CHANNEL_ID
 
 
+def is_debug_message(message: str):
+    return "DEBUG_MODE" in message
+
+
 @bot.command(
     name="schedulemd",
     help="Schedule a mystery dinner using a date and time",
@@ -119,7 +123,9 @@ async def check_if_dm(ctx):
 )
 @commands.check(check_if_dm)
 async def send_message_to_recipient(ctx, *, message: str):
-    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
+    next_dinner = DBService(
+        is_prod=not is_debug_message(message)
+    ).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return
@@ -145,7 +151,9 @@ async def send_message_to_recipient(ctx, *, message: str):
 )
 @commands.check(check_if_dm)
 async def send_message_to_gifter(ctx, *, message: str):
-    next_dinner = DBService(is_prod=is_prod_channel(ctx)).get_latest_mystery_dinner(bot)
+    next_dinner = DBService(
+        is_prod=not is_debug_message(message)
+    ).get_latest_mystery_dinner(bot)
     if not next_dinner:
         await ctx.channel.send("No upcoming dinners found")
         return
