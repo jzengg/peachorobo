@@ -47,8 +47,11 @@ class CalendarService:
         return event_response
 
     def delete_event(self, event_id: str) -> None:
-        event = self.calendar.get_event(event_id)
-        self.calendar.delete_event(event)
+        try:
+            event = self.calendar.get_event(event_id)
+            self.calendar.delete_event(event)
+        except Exception:
+            pass
 
 
 def main():
