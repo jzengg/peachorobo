@@ -63,9 +63,7 @@ async def handle_invite_confirmed(
         event_uri = None
 
     calendar_data: MysteryDinnerCalendar = {"id": event.id, "uri": event_uri}
-    DBService(is_prod=is_prod).create_mystery_dinner(
-        pairings, datetime_obj, calendar_data
-    )
+    DBService.create_mystery_dinner(pairings, datetime_obj, calendar_data)
     await send_pairings_out(pairings, mystery_dinner_time, event_uri)
 
     mystery_dinner_embed = discord.Embed.from_dict(

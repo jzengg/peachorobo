@@ -8,35 +8,31 @@ from discord.ext import commands
 
 from constants import (
     MysteryDinnerPairing,
+    peachorobo_config,
     MysteryDinner,
     SerializedMysteryDinner,
     MysteryDinnerCalendar,
 )
 from utils import serialize_pairing, deserialize_mystery_dinner
 
-JSON_PATH = "data/db.json"
-DEBUG_JSON_PATH = "data/debug_db.json"
+
+def _get_serialized_mystery_dinners() -> List[SerializedMysteryDinner]:
+    try:
+        with open(peachorobo_config.db_json_path, "r") as f:
+            serialized_dinners: List[SerializedMysteryDinner] = json.load(f)
+    except (JSONDecodeError, FileNotFoundError):
+        return []
+    return serialized_dinners
 
 
 class DBService:
-    def __init__(self, is_prod=False):
-        self.json_path = JSON_PATH if is_prod else DEBUG_JSON_PATH
-
-    def _get_serialized_mystery_dinners(self) -> List[SerializedMysteryDinner]:
-        try:
-            with open(self.json_path, "r") as f:
-                serialized_dinners: List[SerializedMysteryDinner] = json.load(f)
-        except (JSONDecodeError, FileNotFoundError):
-            return []
-        return serialized_dinners
-
+    @staticmethod
     def create_mystery_dinner(
-        self,
         pairings: List[MysteryDinnerPairing],
         scheduled_time: datetime,
         calendar: MysteryDinnerCalendar,
     ) -> None:
-        dinners = self._get_serialized_mystery_dinners()
+        dinners = _get_serialized_mystery_dinners()
         serialized_pairings = [
             serialize_pairing(pairing.user, pairing.matched_with)
             for pairing in pairings
@@ -48,11 +44,12 @@ class DBService:
             "id": len(dinners) + 1,
         }
         dinners.append(serialized_dinner)
-        with open(self.json_path, "w") as f:
+        with open(peachorobo_config.db_json_path, "w") as f:
             json.dump(dinners, f)
 
-    def get_latest_mystery_dinner(self, bot: commands.Bot) -> Optional[MysteryDinner]:
-        dinners = self._get_serialized_mystery_dinners()
+    @staticmethod
+    def get_latest_mystery_dinner(bot: commands.Bot) -> Optional[MysteryDinner]:
+        dinners = _get_serialized_mystery_dinners()
         if not dinners:
             return None
         last_dinner = deserialize_mystery_dinner(dinners[-1], bot)
@@ -62,10 +59,11 @@ class DBService:
             return None
         return last_dinner
 
-    def cancel_latest_mystery_dinner(self) -> None:
-        dinners = self._get_serialized_mystery_dinners()
+    @staticmethod
+    def cancel_latest_mystery_dinner() -> None:
+        dinners = _get_serialized_mystery_dinners()
         if not dinners:
             return
         dinners = dinners[:-1]
-        with open(self.json_path, "w") as f:
+        with open(peachorobo_config.db_json_path, "w") as f:
             json.dump(dinners, f)

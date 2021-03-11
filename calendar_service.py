@@ -8,7 +8,7 @@ from gcsa.google_calendar import GoogleCalendar, SendUpdatesMode
 
 from pytz import timezone
 
-from constants import CALENDAR_EMAILS
+from constants import peachorobo_config
 
 
 class CalendarService:
@@ -19,7 +19,7 @@ class CalendarService:
 
     def create_event(self, start_dt: datetime) -> Event:
         end_dt = start_dt + timedelta(hours=2)
-        attendees = CALENDAR_EMAILS
+        attendees = peachorobo_config.calendar_emails
         event = Event(
             "Mystery Dinner",
             start=start_dt,
