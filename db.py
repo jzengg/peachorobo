@@ -8,11 +8,11 @@ from discord.ext import commands
 
 from constants import (
     MysteryDinnerPairing,
-    peachorobo_config,
     MysteryDinner,
     SerializedMysteryDinner,
     MysteryDinnerCalendar,
 )
+from config import peachorobo_config
 from utils import serialize_pairing, deserialize_mystery_dinner
 
 

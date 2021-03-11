@@ -1,7 +1,7 @@
 import argparse
 
 from bot import bot
-from constants import peachorobo_config
+from config import peachorobo_config
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="peachorobo!!")

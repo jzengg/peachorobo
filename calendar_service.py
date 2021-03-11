@@ -8,7 +8,7 @@ from gcsa.google_calendar import GoogleCalendar, SendUpdatesMode
 
 from pytz import timezone
 
-from constants import peachorobo_config
+from config import peachorobo_config
 
 
 class CalendarService:

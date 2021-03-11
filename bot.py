@@ -6,8 +6,8 @@ from calendar_service import CalendarService
 from constants import (
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
     MYSTERY_DINNER_CANCEL_EMOJI,
-    peachorobo_config,
 )
+from config import peachorobo_config
 from db import DBService
 from utils import parse_raw_datetime, get_pretty_datetime
 
