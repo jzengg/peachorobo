@@ -1,5 +1,3 @@
-import os
-
 import discord
 from discord.ext import commands, tasks
 
@@ -208,8 +206,7 @@ class WackWatch(commands.Cog):
         message = await self.watch()
         await ctx.send(f"Finished wack watch: {message}")
 
-    # every 20 minutes
-    @tasks.loop(seconds=1200)
+    @tasks.loop(minutes=20.0)
     async def watch(self) -> str:
         errors = []
         log_path = peachorobo_config.wack_log_path
@@ -229,3 +226,8 @@ class WackWatch(commands.Cog):
             message = "No errors found, clearing logs"
             open(log_path, "w").close()
         return message
+
+    @watch.before_loop
+    async def before_watch(self):
+        print("waiting...")
+        await self.bot.wait_until_ready()
