@@ -1,5 +1,7 @@
+import os
+
 import discord
-from discord.ext import commands
+from discord.ext import commands, tasks
 
 from bot_utils import send_invitation, handle_invite_confirmed
 from calendar_service import CalendarService
@@ -186,3 +188,44 @@ class PostDinner(commands.Cog):
         gifter = pairing.user
         await gifter.send(f"Your recipient says via Peacho: {message}")
         await ctx.author.send(f"Message successfully sent to your gifter")
+
+
+class WackWatch(commands.Cog):
+    """utility to monitor wack logs"""
+
+    def __init__(self, bot):
+        self.bot = bot
+        self.watch.start()
+
+    def cog_unload(self):
+        self.watch.cancel()
+
+    @commands.command(
+        help="Manually run wack watch",
+    )
+    async def wackwatch(self, ctx):
+        await ctx.send("Manually running wack watch")
+        message = await self.watch()
+        await ctx.send(f"Finished wack watch: {message}")
+
+    # every 20 minutes
+    @tasks.loop(seconds=1200)
+    async def watch(self) -> str:
+        errors = []
+        log_path = peachorobo_config.wack_log_path
+        try:
+            with open(log_path) as f:
+                for line in f:
+                    if "WACK_ERROR" in line:
+                        errors.append(line)
+        except FileNotFoundError:
+            open(log_path, "a").close()
+        if errors:
+            message = "wack error occurred"
+            await self.bot.get_channel(peachorobo_config.debug_channel_id).send(
+                f'wack error occurred {", ".join(errors)}'
+            )
+        else:
+            message = "No errors found, clearing logs"
+            open(log_path, "w").close()
+        return message
