@@ -1,3 +1,5 @@
+import time
+
 import discord
 from discord.ext import commands, tasks
 
@@ -209,25 +211,26 @@ class WackWatch(commands.Cog):
         message = await self.watch()
         await ctx.send(f"Finished wack watch: {message}")
 
-    @tasks.loop(minutes=20.0)
+    @tasks.loop(minutes=5.0)
     async def watch(self) -> str:
-        errors = []
         log_path = peachorobo_config.wack_log_path
         try:
             with open(log_path) as f:
-                for line in f:
-                    if "WACK_ERROR" in line:
-                        errors.append(line)
-        except FileNotFoundError:
-            open(log_path, "a").close()
-        if errors:
-            message = "wack error occurred"
+                last_success_timestamp_seconds = float(f.read())
+                # 5 minutes = 60 seconds * 5 = 300 seconds
+                did_run = time.time() - last_success_timestamp_seconds < 300
+                if did_run:
+                    message = "No errors found"
+                else:
+                    message = "Wack has not run for more than 5 minutes. ERROR"
+                    await self.bot.get_channel(peachorobo_config.debug_channel_id).send(
+                        message
+                    )
+        except Exception as e:
+            message = "Error looking up last wack run"
             await self.bot.get_channel(peachorobo_config.debug_channel_id).send(
-                f'wack error occurred {", ".join(errors)}'
+                f"Error looking up last wack run: {e}"
             )
-        else:
-            message = "No errors found, clearing logs"
-            open(log_path, "w").close()
         return message
 
     @watch.before_loop
