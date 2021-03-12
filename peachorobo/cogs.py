@@ -68,6 +68,9 @@ class PreDinner(commands.Cog):
         )
 
     @commands.command(help="Get information about the next upcoming mystery dinner")
+    @commands.check_any(
+        commands.dm_only(), commands.check(check_if_mystery_dinner_channel)
+    )
     async def remindme(self, ctx):
         next_dinner = DBService.get_latest_mystery_dinner(self.bot)
         if not next_dinner:
