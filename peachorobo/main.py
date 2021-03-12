@@ -1,6 +1,6 @@
 import argparse
 
-from bot import bot
+from cogs import bot, PreDinner, PostDinner
 from config import peachorobo_config
 
 if __name__ == "__main__":
@@ -13,4 +13,6 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     peachorobo_config.load(not args.dry)
+    bot.add_cog(PreDinner(bot))
+    bot.add_cog(PostDinner(bot))
     bot.run(peachorobo_config.discord_bot_token)
