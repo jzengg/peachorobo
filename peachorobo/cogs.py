@@ -137,7 +137,8 @@ class PostDinner(commands.Cog):
         calendar_service.delete_event(event_id)
         DBService.cancel_latest_mystery_dinner()
         await ctx.channel.send(
-            f"The next dinner with id {self.next_dinner.id} on {get_pretty_datetime(self.next_dinner.time)} was cancelled"
+            f"The next dinner with id {self.next_dinner.id} on {get_pretty_datetime(self.next_dinner.time)} "
+            f"was cancelled @everyone"
         )
 
     @commands.command(
