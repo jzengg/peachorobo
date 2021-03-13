@@ -4,18 +4,17 @@
   vars:
     project_path: /home/ubuntu/peachorobo
     service_name: peachorobo_bot.service
-    repo_name: peachorobo
   hosts: all
 
   tasks:
   - name: copy env file to host
     copy:
       src: .env.prod
-      dest: "/home/ubuntu/{{ repo_name }}/.env"
+      dest: "{{ project_path }}/.env"
 
   - name: pull latest from git
     ansible.builtin.git:
-      repo: "https://github.com/jzengg/{{ repo_name }}.git"
+      repo: "https://github.com/jzengg/peachorobo.git"
       dest: "{{ project_path }}"
       update: yes
       version: main
