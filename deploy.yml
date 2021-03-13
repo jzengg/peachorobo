@@ -1,0 +1,43 @@
+---
+# Playbook to deploy new code to ec2
+- name: deploy peachorobo
+  vars:
+    project_path: /home/ubuntu/peachorobo
+    service_name: peachorobo_bot.service
+    repo_name: peachorobo
+  hosts: all
+
+  tasks:
+  - name: copy env file to host
+    copy:
+      src: .env.prod
+      dest: "/home/ubuntu/{{ repo_name }}/.env"
+
+  - name: pull latest from git
+    ansible.builtin.git:
+      repo: "https://github.com/jzengg/{{ repo_name }}.git"
+      dest: "{{ project_path }}"
+      update: yes
+      version: main
+
+  - name: install requirements using pip
+    pip:
+      requirements: requirements.txt
+      virtualenv: "{{ project_path }}/venv"
+      virtualenv_command: /usr/bin/python3 -m venv
+      state: present
+
+  - name: copy service file to systemd
+    become: yes
+    copy:
+      src: "{{ service_name }}"
+      dest: "/etc/systemd/system/{{ service_name }}"
+
+  - name: restart bot service
+    become: yes
+    systemd:
+      name: "{{ service_name }}"
+      state: restarted
+      enabled: yes
+      daemon_reload: yes
+
