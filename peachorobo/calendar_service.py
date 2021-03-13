@@ -39,6 +39,7 @@ class CalendarService:
                 hangout_link = event_response.conference_solution.entry_points[0].uri
             except Exception as e:
                 event = self.get_event(event.id)
+                retries -= 1
                 sleep(5)
         return event_response
 
