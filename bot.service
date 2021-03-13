@@ -1,0 +1,7 @@
+[Unit]
+Description=Discord bot
+
+[Service]
+# Command to execute when the service is started
+WorkingDirectory=/home/ubuntu/peachorobo
+ExecStart=/home/ubuntu/peachorobo/venv/bin/python3 /home/ubuntu/peachorobo/peachorobo/main.py
