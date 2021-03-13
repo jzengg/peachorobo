@@ -22,7 +22,7 @@
 
   - name: install requirements using pip
     pip:
-      requirements: requirements.txt
+      requirements: "{{ project_path }}/requirements.txt"
       virtualenv: "{{ project_path }}/venv"
       virtualenv_command: /usr/bin/python3 -m venv
       state: present
