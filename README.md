@@ -23,7 +23,14 @@ When first running, you will need to grant access to your Google
 Calendar using oauth which uses the information from `credentials.json`. 
 Once you grant permission, the token information is persisted to `token.pickle`
 
-## Start bot in tmux session named discordbot
+## Deploy
+Deploy to ec2 using ansible
+```
+ ansible-playbook deploy.yml -i ../ansible/inventory.yaml --verbose
+```
+
+## Misc
+### Start bot in tmux session named discordbot
 ```
 tmux new -s discordbot
 python3 peachorobo/main.py
