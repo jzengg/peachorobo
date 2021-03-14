@@ -53,10 +53,6 @@ class DBService:
         if not dinners:
             return None
         last_dinner = deserialize_mystery_dinner(dinners[-1], bot)
-        utc_now = pytz.utc.localize(datetime.utcnow())
-        est_now = utc_now.astimezone(pytz.timezone("US/Eastern"))
-        if last_dinner.time < est_now:
-            return None
         return last_dinner
 
     @staticmethod
