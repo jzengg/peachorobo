@@ -40,3 +40,9 @@
       enabled: yes
       daemon_reload: yes
 
+  - name: bot service is running
+    become: yes
+    systemd:
+      name: "{{ service_name }}"
+      state: started
+
