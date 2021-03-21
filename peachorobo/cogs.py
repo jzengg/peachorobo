@@ -257,7 +257,7 @@ class NBAHighlights(commands.Cog):
 
     @commands.command(
         help="Get highlights from the most recent NBA game",
-        usage="highlights DEN Nikola Jokic",
+        usage="DEN Nikola Jokic",
     )
     async def highlights(self, ctx, team_abbreviation: str, *, player_name: str):
         try:
