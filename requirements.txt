@@ -36,6 +36,7 @@ MarkupSafe==1.1.1
 more-itertools==8.7.0
 multidict==5.1.0
 mypy-extensions==0.4.3
+nba-api==1.1.9
 nodeenv==1.5.0
 oauthlib==3.1.0
 packaging==20.9

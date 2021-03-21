@@ -4,6 +4,7 @@ data
 .env
 .idea/*
 .mypy_cache
+.DS_STORE
 token.json
 credentials.json
 token.pickle
