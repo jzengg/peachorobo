@@ -14,7 +14,7 @@ from constants import (
 )
 from config import peachorobo_config
 from db import DBService
-from peachorobo.nba import (
+from nba import (
     get_most_recent_game_with_retry,
     get_team_id,
     get_player_id,
