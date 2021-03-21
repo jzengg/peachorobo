@@ -10,11 +10,11 @@ from calendar_service import CalendarService
 from constants import (
     MYSTERY_DINNER_CONFIRMATION_EMOJI,
     MYSTERY_DINNER_CANCEL_EMOJI,
+    NBA_CONFIRMATION_EMOJI,
 )
 from config import peachorobo_config
 from db import DBService
 from peachorobo.nba import (
-    get_assist_highlights,
     get_most_recent_game_with_retry,
     get_team_id,
     get_player_id,
@@ -288,9 +288,16 @@ class NBAHighlights(commands.Cog):
             f"{most_recent_game_data.home_team} vs {most_recent_game_data.away_team} on "
             f"{most_recent_game_data.game_date.strftime('%A')} {most_recent_game_data.game_date}"
         )
-        await ctx.send(
-            f"Found a game: {game_description}. Looking up {len(most_recent_game_data.plays)} highlights now..."
+        game_message = await ctx.send(
+            f"Found a game: {game_description}. Show {len(most_recent_game_data.plays)} highlights now?"
         )
+        await game_message.add_reaction(NBA_CONFIRMATION_EMOJI)
+
+        def is_confirmed(reaction, user):
+            return user == ctx.author and str(reaction.emoji) == NBA_CONFIRMATION_EMOJI
+
+        await self.bot.wait_for("reaction_add", timeout=60.0, check=is_confirmed)
+
         for play_data in most_recent_game_data.plays:
             video_data = await get_video_data_with_retry(
                 HighlightData(

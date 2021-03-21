@@ -8,6 +8,7 @@ from typing_extensions import TypedDict
 MYSTERY_DINNER_PICTURE_URI = "https://i.imgur.com/4ZKWUVC.jpg"
 MYSTERY_DINNER_CONFIRMATION_EMOJI = "<:peach_hungry:819035345307566082>"
 MYSTERY_DINNER_CANCEL_EMOJI = "<:mayu_nya:819042520288722964>"
+NBA_CONFIRMATION_EMOJI = "<:jeffrey_hungry:823308637200056360>"
 
 
 @dataclass
