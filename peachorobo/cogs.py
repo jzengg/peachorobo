@@ -272,7 +272,7 @@ class NBAHighlights(commands.Cog):
             return
 
         await ctx.send(
-            f"Getting highlights for {player_name} on {team_abbreviation}, please be patient..."
+            f"Getting the msot recent game {player_name} on {team_abbreviation}, please be patient..."
         )
         loop = asyncio.get_event_loop()
         most_recent_game_data = await loop.run_in_executor(
