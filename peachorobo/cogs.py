@@ -1,4 +1,6 @@
+import asyncio
 import time
+from concurrent.futures.thread import ThreadPoolExecutor
 
 import discord
 from discord.ext import commands, tasks
@@ -16,6 +18,8 @@ from peachorobo.nba import (
     get_most_recent_game_with_retry,
     get_team_id,
     get_player_id,
+    get_video_data_with_retry,
+    HighlightData,
 )
 from utils import parse_raw_datetime, get_pretty_datetime
 
@@ -270,7 +274,10 @@ class NBAHighlights(commands.Cog):
         await ctx.send(
             f"Getting highlights for {player_name} on {team_abbreviation}, please be patient..."
         )
-        most_recent_game_data = get_most_recent_game_with_retry(team_id, player_id)
+        loop = asyncio.get_event_loop()
+        most_recent_game_data = await loop.run_in_executor(
+            ThreadPoolExecutor(), get_most_recent_game_with_retry, team_id, player_id
+        )
         if most_recent_game_data is None:
             await ctx.send(
                 f"Sorry, couldn't get the most recent game for {player_name}"
@@ -282,8 +289,15 @@ class NBAHighlights(commands.Cog):
             f"{most_recent_game_data.game_date.strftime('%A')} {most_recent_game_data.game_date}"
         )
         await ctx.send(
-            f"Found a game: {game_description}. Looking up highlights now..."
+            f"Found a game: {game_description}. Looking up {len(most_recent_game_data.plays)} highlights now..."
         )
-        highlights = await get_assist_highlights(most_recent_game_data)
-        for highlight in highlights:
-            await ctx.send(f"{highlight.description}\n{highlight.uri}")
+        for play_data in most_recent_game_data.plays:
+            video_data = await get_video_data_with_retry(
+                HighlightData(
+                    game_id=most_recent_game_data.game_id, event_id=play_data.event_id
+                )
+            )
+            if video_data is None:
+                continue
+            else:
+                await ctx.send(f"{video_data.description}\n{video_data.uri}")

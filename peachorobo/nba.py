@@ -27,6 +27,12 @@ class GameData:
 
 
 @dataclass
+class HighlightData:
+    game_id: str
+    event_id: int
+
+
+@dataclass
 class VideoData:
     uri: str
     description: str
@@ -42,8 +48,15 @@ async def main():
     team_id = get_team_id(team_abbreviation.upper())
     player_id = get_player_id(player_name.title())
     game_data = get_most_recent_game_with_retry(team_id, player_id)
-    highlights = await get_assist_highlights(game_data)
-    return highlights
+    video_datas = []
+    for play_data in game_data.plays:
+        video_data = await get_video_data_with_retry(
+            HighlightData(game_id=game_data.game_id, event_id=play_data.event_id)
+        )
+        if video_data is None:
+            continue
+        video_datas.append(video_data)
+    print(video_datas)
 
 
 def get_most_recent_game_with_retry(team_id: str, player_id: str) -> Optional[GameData]:
@@ -63,24 +76,25 @@ def get_most_recent_game_with_retry(team_id: str, player_id: str) -> Optional[Ga
     return game_data
 
 
-async def get_assist_highlights(game_data: GameData) -> List[VideoData]:
-    video_datas = []
-    for play_data in game_data.plays[:1]:
-        retries = 0
-        video_data = None
-        while retries < 5 and video_data is None:
-            try:
-                video_data = await get_video_data(game_data.game_id, play_data.event_id)
-                if video_data is not None:
-                    video_datas.append(video_data)
-                sleep(5)
-            except Exception as e:
-                print(
-                    f"Error getting video data: {type(e)} {e}, sleeping 60, retries: {retries}"
-                )
-                sleep(60)
-                retries += 1
-    return video_datas
+async def get_video_data_with_retry(
+    highlight_data: HighlightData,
+) -> Optional[VideoData]:
+    retries = 0
+    video_data = None
+    while retries < 5 and video_data is None:
+        try:
+            video_data = await get_video_data(
+                highlight_data.game_id, highlight_data.event_id
+            )
+            if video_data is not None:
+                return video_data
+        except Exception as e:
+            print(
+                f"Error getting video data: {type(e)} {e}, sleeping 60, retries: {retries}"
+            )
+            sleep(60)
+            retries += 1
+    return None
 
 
 def get_most_recent_game(team_id: str, player_id: str) -> GameData:
