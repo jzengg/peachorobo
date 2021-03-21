@@ -11,6 +11,12 @@ from constants import (
 )
 from config import peachorobo_config
 from db import DBService
+from peachorobo.nba import (
+    get_assist_highlights,
+    get_most_recent_game_with_retry,
+    get_team_id,
+    get_player_id,
+)
 from utils import parse_raw_datetime, get_pretty_datetime
 
 intents = discord.Intents().default()
@@ -237,3 +243,47 @@ class WackWatch(commands.Cog):
     async def before_watch(self):
         print("waiting...")
         await self.bot.wait_until_ready()
+
+
+class NBAHighlights(commands.Cog):
+    """Get uri for nba highlights"""
+
+    def __init__(self, bot):
+        self.bot = bot
+
+    @commands.command(
+        help="Get highlights from the most recent NBA game",
+        usage="highlights DEN Nikola Jokic",
+    )
+    async def highlights(self, ctx, team_abbreviation: str, *, player_name: str):
+        try:
+            team_id = get_team_id(team_abbreviation.upper())
+        except Exception as e:
+            await ctx.send(f"Error getting team {e}")
+            return
+        try:
+            player_id = get_player_id(player_name.title())
+        except Exception as e:
+            await ctx.send(f"Error getting player {e}")
+            return
+
+        await ctx.send(
+            f"Getting highlights for {player_name} on {team_abbreviation}, please be patient..."
+        )
+        most_recent_game_data = get_most_recent_game_with_retry(team_id, player_id)
+        if most_recent_game_data is None:
+            await ctx.send(
+                f"Sorry, couldn't get the most recent game for {player_name}"
+            )
+            return
+
+        game_description = (
+            f"{most_recent_game_data.home_team} vs {most_recent_game_data.away_team} on "
+            f"{most_recent_game_data.game_date.strftime('%A')} {most_recent_game_data.game_date}"
+        )
+        await ctx.send(
+            f"Found a game: {game_description}. Looking up highlights now..."
+        )
+        highlights = await get_assist_highlights(most_recent_game_data)
+        for highlight in highlights:
+            await ctx.send(f"{highlight.description}\n{highlight.uri}")

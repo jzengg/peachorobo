@@ -1,8 +1,10 @@
+import asyncio
 from dataclasses import dataclass
 from datetime import date
-from typing import List
+from time import sleep
+from typing import List, Optional
 
-import requests
+import aiohttp
 from nba_api.stats.endpoints import videodetails
 from nba_api.stats.library.parameters import ContextMeasureDetailed
 from nba_api.stats.static import players
@@ -30,24 +32,59 @@ class VideoData:
     description: str
 
 
-def main():
+class NoHighlightsFoundError(Exception):
+    pass
+
+
+async def main():
     team_abbreviation = "DEN"
     player_name = "Nikola Jokic"
-    game_data = get_most_recent_game(team_abbreviation, player_name)
-    # video_uris = [
-    #     get_video_data(game_id, play_data.event_id) for play_data in game_data.plays
-    # ]
-    play_descriptions = [play.description for play in game_data.plays]
-    game_description = (
-        f"{game_data.home_team} vs {game_data.away_team} on "
-        f"{game_data.game_date.strftime('%A')} {game_data.game_date}"
-    )
+    team_id = get_team_id(team_abbreviation.upper())
+    player_id = get_player_id(player_name.title())
+    game_data = get_most_recent_game_with_retry(team_id, player_id)
+    highlights = await get_assist_highlights(game_data)
+    return highlights
+
+
+def get_most_recent_game_with_retry(team_id: str, player_id: str) -> Optional[GameData]:
+    retries = 0
+    game_data = None
+    while retries < 5 and game_data is None:
+        try:
+            game_data = get_most_recent_game(team_id, player_id)
+        except NoHighlightsFoundError as e:
+            return None
+        except Exception as e:
+            print(
+                f"Error getting most recent game: {type(e)} {e}, sleeping 60, retries: {retries}"
+            )
+            sleep(60)
+            retries += 1
     return game_data
 
 
-def get_most_recent_game(team_abbreviation: str, player_name: str) -> GameData:
-    team_id = get_team_id(team_abbreviation)
-    player_id = get_player_id(player_name)
+async def get_assist_highlights(game_data: GameData) -> List[VideoData]:
+    video_datas = []
+    for play_data in game_data.plays[:1]:
+        retries = 0
+        video_data = None
+        while retries < 5 and video_data is None:
+            try:
+                video_data = await get_video_data(game_data.game_id, play_data.event_id)
+                if video_data is not None:
+                    video_datas.append(video_data)
+                sleep(5)
+            except Exception as e:
+                print(
+                    f"Error getting video data: {type(e)} {e}, sleeping 60, retries: {retries}"
+                )
+                sleep(60)
+                retries += 1
+    return video_datas
+
+
+def get_most_recent_game(team_id: str, player_id: str) -> GameData:
+    print("Getting most recent game")
     video = videodetails.VideoDetails(
         context_measure_detailed=ContextMeasureDetailed.ast,
         last_n_games=1,
@@ -55,7 +92,10 @@ def get_most_recent_game(team_abbreviation: str, player_name: str) -> GameData:
         player_id=player_id,
     )
     data = video.get_normalized_dict()
-    first_play = data["playlist"][0]
+    try:
+        first_play = data["playlist"][0]
+    except IndexError:
+        raise NoHighlightsFoundError()
     game_id = first_play["gi"]
     month = int(first_play["m"])
     day = int(first_play["d"])
@@ -67,6 +107,7 @@ def get_most_recent_game(team_abbreviation: str, player_name: str) -> GameData:
         PlayData(event_id=play["ei"], description=play["dsc"])
         for play in data["playlist"]
     ]
+    print("Got most recent game")
     return GameData(
         game_id=game_id,
         game_date=game_date,
@@ -88,7 +129,8 @@ def get_player_id(player_name: str) -> str:
     return player["id"]
 
 
-def get_video_data(game_id: str, event_id: int) -> VideoData:
+async def get_video_data(game_id: str, event_id: int) -> Optional[VideoData]:
+    print(f"Getting video data for event_id: {event_id}, game_id: {game_id}")
     headers = {
         "Host": "stats.nba.com",
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:72.0) Gecko/20100101 Firefox/72.0",
@@ -103,13 +145,27 @@ def get_video_data(game_id: str, event_id: int) -> VideoData:
         "Cache-Control": "no-cache",
     }
     url = f"https://stats.nba.com/stats/videoeventsasset?GameEventID={event_id}&GameID={game_id}"
-    r = requests.get(url, headers=headers)
-    json = r.json()
-    video_urls = json["resultSets"]["Meta"]["videoUrls"]
-    playlist = json["resultSets"]["playlist"]
-    video_data = VideoData(uri=video_urls[0]["lurl"], description=playlist[0]["desc"])
-    return video_data
+    async with aiohttp.ClientSession() as session:
+        async with session.get(url, headers=headers) as r:
+            if r.status == 200:
+                json = await r.json()
+                video_urls = json["resultSets"]["Meta"]["videoUrls"]
+                playlist = json["resultSets"]["playlist"]
+                video_data = VideoData(
+                    uri=video_urls[0]["lurl"], description=playlist[0]["dsc"]
+                )
+                print(
+                    f"Success got video data for event_id: {event_id}, game_id: {game_id}"
+                )
+                return video_data
+            else:
+                print(
+                    f"Error getting video data for event_id: {event_id}, game_id: {game_id}, error: {r}"
+                )
+                raise ValueError("Request status not 200")
 
 
 if __name__ == "__main__":
-    main()
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(main())
+    loop.close()
