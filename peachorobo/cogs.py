@@ -20,7 +20,7 @@ from nba import (
     get_video_data_with_retry,
     HighlightData,
 )
-from wack_utils import (
+from peachorobo.wack_utils import (
     get_live_num_sales,
     get_internal_num_sales,
     wack_has_been_run,
