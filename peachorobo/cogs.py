@@ -21,6 +21,11 @@ from nba import (
     get_video_data_with_retry,
     HighlightData,
 )
+from peachorobo.wack_utils import (
+    get_live_num_sales,
+    get_internal_num_sales,
+    wack_has_been_run,
+)
 from utils import parse_raw_datetime, get_pretty_datetime
 
 intents = discord.Intents().default()
@@ -218,34 +223,35 @@ class WackWatch(commands.Cog):
     )
     async def wackwatch(self, ctx):
         await ctx.send("Manually running wack watch")
-        message = await self.watch()
-        await ctx.send(f"Finished wack watch: {message}")
+        await self.watch(verbose=True)
+        await ctx.send(f"Finished wack watch")
 
     @tasks.loop(minutes=5.0)
-    async def watch(self) -> str:
-        log_path = peachorobo_config.wack_log_path
+    async def watch(self, verbose=False) -> None:
+        messages = []
         try:
-            with open(log_path) as f:
-                last_success_timestamp_seconds = float(f.read())
-                # 5 minutes = 60 seconds * 5 = 300 seconds
-                did_run = time.time() - last_success_timestamp_seconds < 300
-                if did_run:
-                    message = "No errors found"
-                else:
-                    message = "Wack has not run for more than 5 minutes. ERROR"
-                    await self.bot.get_channel(peachorobo_config.debug_channel_id).send(
-                        message
-                    )
+            did_run = wack_has_been_run()
+            if did_run and verbose:
+                messages.append("Wack ran in last 5 minutes")
+            elif not did_run:
+                messages.append("Wack has not run for more than 5 minutes. ERROR")
+            live_num_sales = await get_live_num_sales()
+            internal_num_sales = get_internal_num_sales()
+            if live_num_sales != internal_num_sales:
+                messages.append(
+                    f"Wack error! {internal_num_sales} sales in Wack vs {live_num_sales} sales on etsy.com"
+                )
+            elif verbose:
+                messages.append(
+                    f"Number of sales in Wack ({internal_num_sales}) matches number of sales on etsy.com ({live_num_sales})"
+                )
         except Exception as e:
-            message = "Error looking up last wack run"
-            await self.bot.get_channel(peachorobo_config.debug_channel_id).send(
-                f"Error looking up last wack run: {e}"
-            )
-        return message
+            messages.append(f"Error looking up last wack run: {e}")
+        for message in messages:
+            await self.bot.get_channel(peachorobo_config.debug_channel_id).send(message)
 
     @watch.before_loop
     async def before_watch(self):
-        print("waiting...")
         await self.bot.wait_until_ready()
 
 

@@ -14,7 +14,8 @@ class PeachoroboConfig:
     db_json_path: str = ""
     is_prod: bool = False
     bot_command_prefix = ""
-    wack_log_path: str = ""
+    wack_last_success_ts_path: str = ""
+    wack_num_sales_path: str = ""
 
     def load(self, is_prod: bool) -> None:
         load_dotenv()
@@ -25,7 +26,8 @@ class PeachoroboConfig:
         self.calendar_emails = os.environ["CALENDAR_EMAILS"].split(",")
         self.db_json_path = os.environ["DB_JSON_PATH"]
         self.bot_command_prefix = "!" if is_prod else "?"
-        self.wack_log_path = os.environ["WACK_LOG_PATH"]
+        self.wack_last_success_ts_path = os.environ["WACK_LAST_SUCCESS_TS_PATH"]
+        self.wack_num_sales_path = os.environ["WACK_NUM_SALES_PATH"]
 
 
 peachorobo_config = PeachoroboConfig()
