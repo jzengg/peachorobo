@@ -222,12 +222,17 @@ class WackWatch(commands.Cog):
     )
     async def wackwatch(self, ctx):
         await ctx.send("Manually running wack watch")
-        await self.watch(verbose=True)
+        await self.watch(ctx=ctx, verbose=True)
         await ctx.send(f"Finished wack watch")
 
     @tasks.loop(minutes=5.0)
-    async def watch(self, verbose=False) -> None:
+    async def watch(self, ctx=None, verbose=False) -> None:
         messages = []
+        channel = (
+            ctx
+            if ctx is not None
+            else self.bot.get_channel(peachorobo_config.debug_channel_id)
+        )
         try:
             did_run = wack_has_been_run()
             if did_run and verbose:
@@ -247,7 +252,7 @@ class WackWatch(commands.Cog):
         except Exception as e:
             messages.append(f"Error looking up last wack run: {e}")
         for message in messages:
-            await self.bot.get_channel(peachorobo_config.debug_channel_id).send(message)
+            await channel.send(message)
 
     @watch.before_loop
     async def before_watch(self):
