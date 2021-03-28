@@ -1,6 +1,5 @@
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
-from time import time
 
 import discord
 from discord.ext import commands, tasks
