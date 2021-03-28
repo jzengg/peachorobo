@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
+from time import time
 
 import discord
 from discord.ext import commands, tasks
@@ -213,6 +214,9 @@ class WackWatch(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.watch.start()
+        # want to only send each alert once. need some kind of hash to tell us if we've sent that kind of alert before
+        # and avoid sending it again
+        self.messages_key = None
 
     def cog_unload(self):
         self.watch.cancel()
@@ -251,8 +255,11 @@ class WackWatch(commands.Cog):
                 )
         except Exception as e:
             messages.append(f"Error looking up last wack run: {e}")
-        for message in messages:
-            await channel.send(message)
+        new_messages_key = hash(tuple(messages))
+        if new_messages_key != self.messages_key:
+            self.messages_key = new_messages_key
+            for message in messages:
+                await channel.send(message)
 
     @watch.before_loop
     async def before_watch(self):
