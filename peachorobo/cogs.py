@@ -1,5 +1,6 @@
 import asyncio
 from concurrent.futures.thread import ThreadPoolExecutor
+from time import sleep
 
 import discord
 from discord.ext import commands, tasks
@@ -242,16 +243,24 @@ class WackWatch(commands.Cog):
                 messages.append("Wack ran in last 5 minutes")
             elif not did_run:
                 messages.append("Wack has not run for more than 5 minutes. ERROR")
+            retries = 6
             live_num_sales = await get_live_num_sales()
-            internal_num_sales = get_internal_num_sales()
-            if live_num_sales != internal_num_sales:
-                messages.append(
-                    f"Wack error! {internal_num_sales} sales in Wack vs {live_num_sales} sales on etsy.com"
-                )
-            elif verbose:
-                messages.append(
-                    f"Number of sales in Wack ({internal_num_sales}) matches number of sales on etsy.com ({live_num_sales})"
-                )
+            while True:
+                internal_num_sales = get_internal_num_sales()
+                if live_num_sales != internal_num_sales:
+                    if retries > 0:
+                        retries -= 1
+                        sleep(10)
+                        continue
+                    messages.append(
+                        f"Wack error! {internal_num_sales} sales in Wack vs {live_num_sales} sales on etsy.com"
+                    )
+                    break
+                elif verbose:
+                    messages.append(
+                        f"Number of sales in Wack ({internal_num_sales}) matches number of sales on etsy.com ({live_num_sales})"
+                    )
+                    break
         except Exception as e:
             messages.append(f"Error looking up last wack run: {e}")
         new_messages_key = hash(tuple(messages))
