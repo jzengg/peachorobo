@@ -256,10 +256,11 @@ class WackWatch(commands.Cog):
                         f"Wack error! {internal_num_sales} sales in Wack vs {live_num_sales} sales on etsy.com"
                     )
                     break
-                elif verbose:
-                    messages.append(
-                        f"Number of sales in Wack ({internal_num_sales}) matches number of sales on etsy.com ({live_num_sales})"
-                    )
+                else:
+                    if verbose:
+                        messages.append(
+                            f"Number of sales in Wack ({internal_num_sales}) matches number of sales on etsy.com ({live_num_sales})"
+                        )
                     break
         except Exception as e:
             messages.append(f"Error looking up last wack run: {e}")
