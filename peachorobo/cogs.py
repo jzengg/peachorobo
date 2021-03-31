@@ -243,7 +243,7 @@ class WackWatch(commands.Cog):
                 messages.append("Wack ran in last 5 minutes")
             elif not did_run:
                 messages.append("Wack has not run for more than 5 minutes. ERROR")
-            retries = 6
+            retries = 12
             live_num_sales = await get_live_num_sales()
             while True:
                 internal_num_sales = get_internal_num_sales()
