@@ -4,8 +4,8 @@ from config import peachorobo_config
 from discord.ext import commands, tasks
 
 
-class CVSWatch(commands.Cog):
-    """utility to check for vaccine appointments at CVS"""
+class VacWatch(commands.Cog):
+    """utility to check for vaccine appointments"""
 
     STATE_ABBREV = "MA"
     CVS_URL = f"http://www.cvs.com/immunizations/covid-19-vaccine.vaccine-status.{STATE_ABBREV}.json?vaccineinfo"
@@ -32,7 +32,7 @@ class CVSWatch(commands.Cog):
             else self.bot.get_channel(peachorobo_config.debug_channel_id)
         )
         try:
-            openings = await self.get_openings()
+            openings = await self.get_cvs_openings()
             if openings:
                 openings_message = ", ".join([opening["city"] for opening in openings])
                 message = f"Openings available! book at: https://www.cvs.com/immunizations/covid-19-vaccine. Cities available: ${openings_message}"
@@ -49,7 +49,7 @@ class CVSWatch(commands.Cog):
     async def before_cvswatch(self):
         await self.bot.wait_until_ready()
 
-    async def get_openings(self):
+    async def get_cvs_openings(self):
         async with aiohttp.ClientSession() as session:
             async with session.get(self.CVS_URL, headers=self.HEADERS) as r:
                 if r.status == 200:
