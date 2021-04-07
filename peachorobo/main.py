@@ -1,6 +1,6 @@
 import argparse
 
-from cogs import bot, PreDinner, PostDinner, WackWatch, NBAHighlights
+from cogs import bot, PreDinner, PostDinner, WackWatch, NBAHighlights, CVSWatch
 from config import peachorobo_config
 
 if __name__ == "__main__":
@@ -16,6 +16,7 @@ if __name__ == "__main__":
     bot.add_cog(PreDinner(bot))
     bot.add_cog(PostDinner(bot))
     bot.add_cog(WackWatch(bot))
-    if args.dry:
-        bot.add_cog(NBAHighlights(bot))
+    bot.add_cog(CVSWatch(bot))
+    # if args.dry:
+    #     bot.add_cog(NBAHighlights(bot))
     bot.run(peachorobo_config.discord_bot_token)
