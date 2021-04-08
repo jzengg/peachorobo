@@ -1,7 +1,8 @@
 import aiohttp
 
-from config import peachorobo_config
 from discord.ext import commands, tasks
+
+BOSTONIAN_CHANNEL_ID = 817411627682103336
 
 
 class VacWatch(commands.Cog):
@@ -26,11 +27,7 @@ class VacWatch(commands.Cog):
     @tasks.loop(hours=1.0)
     async def cvswatch(self, ctx=None, verbose=False) -> None:
         messages = []
-        channel = (
-            ctx
-            if ctx is not None
-            else self.bot.get_channel(peachorobo_config.debug_channel_id)
-        )
+        channel = ctx if ctx is not None else self.bot.get_channel(BOSTONIAN_CHANNEL_ID)
         try:
             openings = await self.get_cvs_openings()
             if openings:
