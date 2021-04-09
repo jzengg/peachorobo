@@ -32,7 +32,7 @@ class VacWatch(commands.Cog):
             openings = await self.get_cvs_openings()
             if openings:
                 openings_message = ", ".join([opening["city"] for opening in openings])
-                message = f"Openings available! book at: https://www.cvs.com/immunizations/covid-19-vaccine. Cities available: ${openings_message}"
+                message = f"Openings available! book at: https://www.cvs.com/immunizations/covid-19-vaccine. Cities available: {openings_message}"
                 messages.append(message)
             elif not openings and verbose:
                 messages.append("No openings found")
