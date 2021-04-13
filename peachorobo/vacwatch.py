@@ -2,7 +2,7 @@ import aiohttp
 
 from discord.ext import commands, tasks
 
-from peachorobo.config import peachorobo_config
+from config import peachorobo_config
 
 BOSTONIAN_CHANNEL_ID = 817411627682103336
 
