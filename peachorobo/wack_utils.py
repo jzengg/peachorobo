@@ -39,7 +39,7 @@ async def get_live_num_sales() -> int:
             page = await response.text()
             soup = BeautifulSoup(page, "html.parser")
             num_sales_tags = soup.find_all(href=SOLD_HREF)
-            num_sales_text = num_sales_tags[0].text
+            num_sales_text = num_sales_tags[0].text.replace(",", "")
             num_sales = int(num_sales_text.split(" ")[0])
             return num_sales
 
